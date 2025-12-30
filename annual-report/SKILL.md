@@ -248,6 +248,73 @@ When you need an icon not listed above, create a simple stroke-based SVG that ma
 - `scroll-snap-type: y mandatory` on html
 - Each section is `min-height: 100vh`
 
+### Code Particle Background Effect
+
+**ALWAYS include** a programmer-style particle background effect. This adds visual depth and reinforces the coder aesthetic.
+
+**Implementation**:
+
+1. Add a fixed canvas element at the start of `<body>`:
+```html
+<canvas id="particles"></canvas>
+```
+
+2. Add CSS for the canvas:
+```css
+#particles {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
+}
+```
+
+3. Add JavaScript particle effect with these characteristics:
+
+**Particle Characters**:
+- Code symbols: `01<>{}[];:=/\*+-&|!?.#$%^~\`@`
+- Code keywords: `fn`, `let`, `if`, `for`, `use`, `()`, `=>`, `{}`, `[]`, `//`, `/*`, `*/`, `0x`, `&&`, `||`
+
+**Animation Behavior**:
+- Slow falling motion (speed: 0.3-1.0)
+- Slight horizontal drift
+- Occasional character changes
+- Low opacity (3%-15%) to not distract from content
+
+**Color Distribution**:
+- 70% green (`rgba(63, 185, 80, opacity)`)
+- 10% purple (`rgba(163, 113, 247, opacity)`)
+- 10% blue (`rgba(88, 166, 255, opacity)`)
+- 10% amber (`rgba(210, 153, 34, opacity)`)
+
+**Connection Lines**:
+- Draw faint lines between nearby particles (distance < 120px)
+- Line opacity based on distance: `(1 - dist/maxDist) * 0.04`
+- Color: green with very low opacity
+
+**Performance**:
+- Particle count based on screen size: `Math.min(width * height / 25000, 80)`
+- Use `requestAnimationFrame` for smooth animation
+- Handle window resize events
+
+**Example JavaScript Structure**:
+```javascript
+(function() {
+    const canvas = document.getElementById('particles');
+    const ctx = canvas.getContext('2d');
+    const codeChars = '01<>{}[];:=/\\*+-&|!?.#$%^~`@';
+    const keywords = ['fn', 'let', 'if', 'for', '()', '=>', '{}', '[]', '//', '&&'];
+
+    // Particle class with reset(), update(), draw() methods
+    // Connection lines drawing function
+    // Animation loop with requestAnimationFrame
+    // Resize handler
+})();
+```
+
 ### Visual Components (mix and match based on data)
 
 **Terminal Window**: For command-line style displays
