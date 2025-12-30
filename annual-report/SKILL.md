@@ -9,39 +9,82 @@ Generate a beautiful, personalized HTML annual report for Claude Code usage. The
 
 ## Data Collection
 
-Read all available data from `~/.claude/`:
+**IMPORTANT**: Use the data collection script to gather all statistics accurately.
 
-### stats-cache.json (Required)
+### Step 1: Run Collection Script
+
+```bash
+python3 /path/to/annual-report/scripts/collect_all.py --year 2025
+```
+
+The script outputs a comprehensive JSON to stdout containing all data sources.
+
+### Step 2: Parse JSON Output
+
+The JSON structure:
 ```json
 {
-  "dailyActivity": [{"date": "2025-01-01", "messageCount": 100, "sessionCount": 3, "toolCallCount": 50}],
-  "dailyModelTokens": [{"date": "2025-01-01", "tokensByModel": {"claude-sonnet": 50000}}],
-  "modelUsage": {"claude-sonnet": {"inputTokens": 1000, "outputTokens": 500, "cacheReadInputTokens": 10000}},
-  "totalSessions": 100,
-  "totalMessages": 5000,
-  "longestSession": {"messageCount": 300, "timestamp": "2025-12-01"},
-  "firstSessionDate": "2025-01-15",
-  "hourCounts": {"9": 10, "14": 50, "20": 80}
+  "meta": {
+    "generated_at": "...",
+    "year": 2025,
+    "data_sources": {
+      "code_proxy": {"status": "ok", "records": 5078},
+      "stats_cache": {"status": "ok"},
+      "history": {"status": "ok", "entries": 12345},
+      "todos": {"status": "ok", "files": 515},
+      "file_history": {"status": "ok", "sessions": 74},
+      "plans": {"status": "ok", "files": 18}
+    }
+  },
+  "code_proxy": { ... },
+  "stats_cache": { ... },
+  "history": { ... },
+  "todos": { ... },
+  "file_history": { ... },
+  "plans": { ... },
+  "derived": {
+    "persona": { "type": "night_owl", "traits": [...] },
+    "milestones": [...]
+  }
 }
 ```
 
-### history.jsonl (Required)
-Each line: `{"project": "/path/to/project", "timestamp": 1234567890, "display": "user message"}`
+### Data Sources (Priority Order)
 
-Extract: project frequency, time range, conversation patterns.
+#### 1. Code Proxy Database (PRIMARY - if available)
+Location: `~/.code_proxy/code_proxy.db`
 
-### todos/*.json (Optional)
-Task tracking: `[{"content": "task", "status": "completed|pending|in_progress"}]`
+**This is the richest data source.** When available, it provides:
+- Total API requests and token usage
+- Per-model statistics (requests, tokens, response time)
+- Hourly and daily distribution
+- Endpoint usage breakdown
+- Response time percentiles (p50, p90, p99)
 
-### file-history/ (Optional)
-Count directories (sessions with edits) and files (total edits).
+#### 2. stats-cache.json (Core Statistics)
+Location: `~/.claude/stats-cache.json`
 
-### plans/*.md (Optional)
-Count plan files for architectural thinking score.
+Contains: session counts, message counts, model usage, hour distribution, longest session.
 
-### Code Proxy Database (Optional)
-macOS: `~/Library/Application Support/com.example.codeProxy/code_proxy.db`
-Query `request_logs` for API metrics.
+#### 3. history.jsonl (Project Distribution)
+Location: `~/.claude/history.jsonl`
+
+Contains: project paths, timestamps, conversation history.
+
+#### 4. todos/*.json (Task Tracking)
+Location: `~/.claude/todos/`
+
+Contains: task status (completed/pending/in_progress), completion rates.
+
+#### 5. file-history/ (Edit Activity)
+Location: `~/.claude/file-history/`
+
+Contains: sessions with file edits, most edited files.
+
+#### 6. plans/*.md (Architectural Thinking)
+Location: `~/.claude/plans/`
+
+Contains: plan file count for architectural thinking score.
 
 ## Report Generation Philosophy
 
