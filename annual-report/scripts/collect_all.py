@@ -33,94 +33,24 @@ from collectors import (
 
 
 def calculate_derived_metrics(data: dict) -> dict:
-    """Calculate derived metrics from collected data."""
+    """
+    Calculate factual derived metrics from collected data.
+
+    NOTE: Persona and traits analysis is intentionally NOT included here.
+    These subjective interpretations should be done by Claude based on
+    the raw data, allowing for more nuanced and contextual analysis.
+    """
     derived = {
-        "persona": {},
-        "coding_patterns": {},
-        "model_preference": {},
-        "productivity_score": {},
         "milestones": []
     }
 
-    # Analyze coding patterns from hour distribution
     code_proxy = data.get('code_proxy', {})
     stats_cache = data.get('stats_cache', {})
-
-    # Determine persona type based on peak hours
-    by_hour = code_proxy.get('by_hour', []) or stats_cache.get('hour_distribution', [])
-    if by_hour:
-        # Sort by activity
-        sorted_hours = sorted(by_hour, key=lambda x: x.get('requests', 0) or x.get('sessions', 0), reverse=True)
-        peak_hours = [h['hour'] for h in sorted_hours[:3]]
-
-        # Classify persona
-        night_hours = sum(1 for h in peak_hours if h >= 20 or h < 6)
-        morning_hours = sum(1 for h in peak_hours if 6 <= h < 12)
-        afternoon_hours = sum(1 for h in peak_hours if 12 <= h < 18)
-
-        if night_hours >= 2:
-            persona_type = "night_owl"
-        elif morning_hours >= 2:
-            persona_type = "early_bird"
-        elif afternoon_hours >= 2:
-            persona_type = "steady_performer"
-        else:
-            persona_type = "flexible_coder"
-
-        derived["persona"]["type"] = persona_type
-        derived["persona"]["peak_hours"] = peak_hours
-
-    # Analyze traits
-    traits = []
-
-    # Check for deep focus (long sessions)
-    longest = stats_cache.get('longest_session', {})
-    if longest and longest.get('messages', 0) > 200:
-        traits.append("deep_focus")
-
-    # Check for multi-project
     history = data.get('history', {})
-    if history.get('unique_projects', 0) > 5:
-        traits.append("multi_project")
 
-    # Check task completion rate
-    todos = data.get('todos', {})
-    if todos.get('completion_rate', 0) > 70:
-        traits.append("task_completer")
-    elif todos.get('completion_rate', 0) > 50:
-        traits.append("consistent_progress")
-
-    # Check for architectural thinking
-    plans = data.get('plans', {})
-    if plans.get('total_plans', 0) > 10:
-        traits.append("architect")
-
-    derived["persona"]["traits"] = traits
-
-    # Model preference
-    by_model = code_proxy.get('by_model', [])
-    if by_model:
-        primary = by_model[0]['model'] if by_model else None
-        secondary = by_model[1]['model'] if len(by_model) > 1 else None
-
-        derived["model_preference"]["primary"] = primary
-        derived["model_preference"]["secondary"] = secondary
-
-        # Calculate opus usage rate
-        total_requests = sum(m['requests'] for m in by_model)
-        opus_requests = sum(m['requests'] for m in by_model if 'opus' in m['model'].lower())
-        derived["model_preference"]["opus_usage_rate"] = round(opus_requests / total_requests * 100, 1) if total_requests > 0 else 0
-
-    # Productivity score
-    derived["productivity_score"]["task_completion"] = todos.get('completion_rate', 0)
-    overview = stats_cache.get('overview', {})
-    if overview.get('active_days', 0) > 0:
-        derived["productivity_score"]["sessions_per_day"] = round(
-            overview.get('total_sessions', 0) / overview.get('active_days', 1), 2
-        )
-
-    # Milestones
+    # Milestones - factual events only
     milestones = []
+    overview = stats_cache.get('overview', {})
 
     # First session
     first_date = overview.get('first_session_date') or code_proxy.get('summary', {}).get('date_range', {}).get('first')
@@ -128,6 +58,7 @@ def calculate_derived_metrics(data: dict) -> dict:
         milestones.append({"type": "first_session", "date": first_date})
 
     # Longest session
+    longest = stats_cache.get('longest_session', {})
     if longest and longest.get('timestamp'):
         milestones.append({
             "type": "longest_session",
